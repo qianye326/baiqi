@@ -1,0 +1,43 @@
+from bs4 import BeautifulSoup
+import requests
+import csv
+import time
+import random
+list_csv= [['名称','简介','评分','主演']]
+for i in range(0,250,25):
+    print('正在爬取请稍后')
+    time.sleep(random.randint(2,8))
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
+    }
+    url = 'https://movie.douban.com/top250?start={}&amp;filter='.format(i)
+    html = requests.get(url,headers=headers)
+    print('*'*96)
+    print(html.text)
+    soup = BeautifulSoup(html.text,'lxml')
+    data = soup.select('.grid_view li')
+    #获取title
+    for d in data:
+        title = d.select('.hd .title')[0].text
+        print(title)
+        href = d.select('.hd a')[0]['href']
+        print(href)
+        time.sleep(random.randint(1,5))
+        html = requests.get(href,headers=headers)
+        soup = BeautifulSoup(html.text,'lxml')
+        try:
+            summary = soup.select('.related-info div span')[0].text.replace(' ','').replace('\n','')
+            grade = soup.select('.ll.rating_num')[0].text
+            attrs = soup.select('.actor .attrs')[0].text
+            print(summary,grade,attrs)
+            print('*'*96)
+            film = (title,summary,grade,attrs)
+            list_csv.append(film)
+        except:
+            print('爬取失败')
+with open('douban.csv', 'a', errors='ignore') as f:
+    csv = csv.writer(f,delimiter=',')
+    for li in list_csv:
+        csv.writerow(li)
+
+
